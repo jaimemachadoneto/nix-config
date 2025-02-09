@@ -1,40 +1,26 @@
-# This is your nixos configuration.
-# For home configuration, see /modules/home/*
-{ flake, pkgs, lib, ... }:
+# Configuration common to all Linux systems
+{ flake, ... }:
 
 let
-  inherit (flake) inputs;
+  inherit (flake) config inputs;
   inherit (inputs) self;
 in
 {
-  nixpkgs = {
-    config = {
-      allowBroken = true;
-      allowUnsupportedSystem = true;
-      allowUnfree = true;
-    };
-    overlays = lib.attrValues self.overlays;
-  };
+  imports = [
+    {
+      # users.users.${config.me.username}.isNormalUser = true;
+      # home-manager.users.${config.me.username} = { };
 
-  nix = {
-    # Choose from https://search.nixos.org/packages?channel=unstable&from=0&size=50&sort=relevance&type=packages&query=nix
-    # package = pkgs.nixVersions.latest;
+      home-manager.sharedModules = [
+        self.homeModules.default
+        # self.homeModules.linux-only
+      ];
+    }
+    self.nixosModules.common
+    # inputs.agenix.nixosModules.default # Used in github-runner.nix & hedgedoc.nix
+    # ./linux/self-ide.nix
+    ./linux/current-location.nix
+  ];
 
-    nixPath = [ "nixpkgs=${flake.inputs.nixpkgs}" ]; # Enables use of `nix-shell -p ...` etc
-    registry.nixpkgs.flake = flake.inputs.nixpkgs; # Make `nix shell` etc use pinned nixpkgs
-
-    settings = {
-      max-jobs = "auto";
-      experimental-features = "nix-command flakes";
-      # I don't have an Intel mac.
-      extra-platforms = lib.mkIf pkgs.stdenv.isDarwin "aarch64-darwin x86_64-darwin";
-      # Nullify the registry for purity.
-      flake-registry = builtins.toFile "empty-flake-registry.json" ''{"flakes":[],"version":2}'';
-      # trusted-users = [ "root" (if pkgs.stdenv.isDarwin then flake.config.me.username else "@wheel") ];
-      # These users can add Nix caches.
-      trusted-users = [ "root" "runner" "jaime" ];
-    };
-  };
-
-  services.openssh.enable = true;
+  boot.loader.grub.configurationLimit = 5; # Who needs more?
 }
