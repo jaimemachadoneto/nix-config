@@ -14,6 +14,7 @@
         nix-output-monitor
         nixpkgs-fmt
         trunk-io
+        omnix
       ];
     };
     pre-commit.settings = {

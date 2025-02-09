@@ -17,8 +17,11 @@
     nixvim.url = "github:nix-community/nixvim";
     nixvim.inputs.nixpkgs.follows = "nixpkgs";
     nixvim.inputs.flake-parts.follows = "flake-parts";
+    nixos-vscode-server.flake = false;
+    nixos-vscode-server.url = "github:nix-community/nixos-vscode-server";
 
     # Devshell
+    omnix.url = "github:juspay/omnix";
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
   };
