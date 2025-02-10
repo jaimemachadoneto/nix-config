@@ -35,6 +35,10 @@
         tags = [ "use:dracula.zsh-theme" "from:github" "as:theme" ];
       }
       {
+        name = "wfxr/forgit";
+        tags = [ "from:github" ];
+      }
+      {
         name = "joshskidmore/zsh-fzf-history-search";
         tags = [ "use:zsh-fzf-history-search.plugin.zsh" "from:github" "as:plugin" ];
       }
@@ -42,10 +46,10 @@
         name = "nix-community/nix-zsh-completions";
         tags = [ "use:nix-zsh-completions" "from:github" "as:plugin" ];
       }
-      {
-        name = "plugins/git";
-        tags = [ "from:oh-my-zsh" "if:\"(( $+commands[git] ))\"" ];
-      }
+      # {
+      #   name = "plugins/git";
+      #   tags = [ "from:oh-my-zsh" "if:\"(( $+commands[git] ))\"" ];
+      # }
       {
         name = "plugins/golang";
         tags = [ "from:oh-my-zsh" "if:\"(( $+commands[go] ))\"" ];

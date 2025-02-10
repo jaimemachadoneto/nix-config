@@ -1,7 +1,10 @@
 { pkgs, ... }: {
   programs.bat = {
     enable = true;
-    config.theme = "dracula";
+    config = {
+      theme = "dracula";
+      style = "full,-grid";
+    };
 
     extraPackages = with pkgs.bat-extras; [ batdiff batman batgrep batwatch ];
     themes = {
@@ -16,5 +19,8 @@
       };
     };
 
+  };
+  home.shellAliases = {
+    "c" = "bat --theme=\"Dracula\" --style='full,-grid' --paging=never";
   };
 }

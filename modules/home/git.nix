@@ -26,8 +26,9 @@ in
     enable = true;
     userName = "Jaime Machado"; #flake.config.me.fullname;
     userEmail = "jaime.machado@gmail.com"; #flake.config.me.email;
-
+    diff-so-fancy.enable = false;
     delta = {
+      #TODO: Take a look to toggle side-by-side: https://dandavison.github.io/delta/tips-and-tricks/toggling-delta-features.html
       enable = true;
       options = {
         decorations = {
@@ -35,13 +36,16 @@ in
           # file-decoration-style = "none";
           # file-style = "bold yellow ul";
           theme = "Dracula";
-          line-numbers = true;
-          side-by-side = true;
-          line-numbers-left-format = "";
-          line-numbers-right-format = "│ ";
+          # line-numbers = true;
+          # side-by-side = true;
+          # line-numbers-left-format = "";
+          # line-numbers-right-format = "│ ";
         };
         features = "decorations";
         whitespace-error-style = "22 reverse";
+        width = 100; # Automatically use full width
+        max-line-length = 250; # Increase max line length for better side-by-side display
+        navigate = true; # Enable hunk navigation with 'n' and 'N'
 
       };
     };

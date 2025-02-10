@@ -1,0 +1,18 @@
+$taskName = "Windows Terminal Quake Mode"
+$wtPath = "C:\Users\$env:USERNAME\AppData\Local\Microsoft\WindowsApps\wt.exe"
+$arguments = "-w _quake"
+
+# Check if the task already exists and delete it
+if (Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue) {
+    Unregister-ScheduledTask -TaskName $taskName -Confirm:$false
+}
+
+# Create the scheduled task
+$action = New-ScheduledTaskAction -Execute $wtPath -Argument $arguments
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+$settings = New-ScheduledTaskSettingsSet -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+$principal = New-ScheduledTaskPrincipal -UserId $env:USERNAME -LogonType Interactive -RunLevel Highest
+
+Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal
+
+Write-Host "Scheduled task '$taskName' has been created successfully!"

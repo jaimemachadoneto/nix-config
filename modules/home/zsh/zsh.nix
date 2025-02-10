@@ -95,9 +95,6 @@
       unset pw
       }
 
-      bindkey '^[[H' beginning-of-line
-      bindkey '^[[F' end-of-line
-
       batf() {
           tail --retry -f "$1"| bat --paging=never -l log;
       }
@@ -135,6 +132,22 @@
           rm ~/.netrc
       }
 
+      traverse-upwards() {
+        local dir=$(
+          [ $# = 1 ] && [ -d "$1" ] && cd "$1"
+          while true; do
+            find "$PWD" -mindepth 1 -maxdepth 1 -type d -not -iwholename '*.git*'
+            echo "$PWD"
+            [ $PWD = / ] && break
+            cd ..
+          done | fzf --tiebreak=end --height 50% --reverse --preview 'tree -C {} | head -200'
+        ) && cd "$dir"
+      }
+
+      find-directory() {
+        find . -type d -not -iwholename '*.git*' | fzf --tiebreak=end --height 50% --reverse --preview 'tree -C {} | head -200'
+
+      }
 
       1pass_signin() {
           eval $(op signin)
@@ -145,6 +158,11 @@
       zstyle ':omz:plugins:alias-finder' cheaper yes # disabled by default
       zstyle ':completion:*' menu select=0 search
 
+      _myfindin() {
+        BUFFER="myfindin $(pwd)"
+        zle accept-line
+      }
+      zle -N _myfindin
 
       zstyle ':completion:*' list-colors "$\{(s.:.)LS_COLORS}"
 
@@ -165,6 +183,8 @@
       bindkey  "^[[3~"  delete-char
       bindkey  "^[[H"   beginning-of-line
       bindkey  "^[[F"   end-of-line
+      bindkey  "^F"     _myfindin
+
       export TERM=xterm-256color
       export COLORTERM="truecolor"
     '';
