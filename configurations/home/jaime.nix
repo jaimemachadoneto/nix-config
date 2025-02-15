@@ -17,6 +17,7 @@ in
     config.nix.package
   ];
 
+  # home.username = flake.config.hostSpec.username;
   home.username = "jaime";
   home.homeDirectory = lib.mkDefault "/${if pkgs.stdenv.isDarwin then "Users" else "home"}/jaime";
   home.stateVersion = "24.11";
