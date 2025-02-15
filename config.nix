@@ -3,7 +3,9 @@
 {
   hostSpec = {
     username = "jaime";
-    userFullname = "Jaime Machado";
+    userFullName = "Jaime Machado";
     email = "jaime.machado@gmail.com";
+    handle = "jaimemachado";
+    # domain = "machadoneto.win";
   };
 }

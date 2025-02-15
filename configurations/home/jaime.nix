@@ -18,7 +18,7 @@ in
   ];
 
   # home.username = flake.config.hostSpec.username;
-  home.username = "jaime";
+  home.username = flake.config.hostSpec.username;
   home.homeDirectory = lib.mkDefault "/${if pkgs.stdenv.isDarwin then "Users" else "home"}/jaime";
   home.stateVersion = "24.11";
 }
