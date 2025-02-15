@@ -4,9 +4,18 @@ let
   inherit (inputs) self;
 in
 {
-  imports = [
-    self.homeModules.default
-  ];
+  imports =
+    if flake.config.hostSpec.isMinimal then [
+      self.homeModules.all
+    ] else if flake.config.hostSpec.isServer then [
+      self.homeModules.all
+    ] else if flake.config.hostSpec.isProduction then [
+      self.homeModules.all
+    ] else if flake.config.hostSpec.isWork then [
+      self.homeModules.all
+    ] else [
+      self.homeModules.all
+    ];
 
   # To use the `nix` from `inputs.nixpkgs` on templates using the standalone `home-manager` template
 
@@ -17,7 +26,4 @@ in
     config.nix.package
   ];
 
-  home.username = "jaime";
-  home.homeDirectory = lib.mkDefault "/${if pkgs.stdenv.isDarwin then "Users" else "home"}/jaime";
-  home.stateVersion = "24.11";
 }

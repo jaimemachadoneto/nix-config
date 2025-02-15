@@ -32,7 +32,7 @@ in
     #
     # ========== Misc Inputs ==========
     #
-
+    ../../common/core
     # (map lib.custom.relativeToRoot [
     #   #
     #   # ========== Required Configs ==========
