@@ -5,7 +5,7 @@ let
 in
 {
   imports = [
-    self.homeModules.default
+    self.homeModules.all
   ];
 
   # To use the `nix` from `inputs.nixpkgs` on templates using the standalone `home-manager` template
