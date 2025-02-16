@@ -20,14 +20,27 @@
     nixos-vscode-server.flake = false;
     nixos-vscode-server.url = "github:nix-community/nixos-vscode-server";
 
+    # Secrets management. See ./docs/secretsmgmt.md
+    sops-nix = {
+      url = "github:mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+
     # Devshell
     omnix.url = "github:juspay/omnix";
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
+
+    nix-secrets = {
+      url = "git+ssh://git@github.com/jaimemachado/nix-secrets?shallow=1&ref=main";
+      flake = false;
+    };
+
   };
 
   # Wired using https://nixos-unified.org/autowiring.html
-  outputs = inputs@{ self, ... }:
+  outputs = inputs@{ self, home-manager, ... }:
     inputs.flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
       imports = (with builtins;
@@ -43,6 +56,7 @@
           inherit system;
           overlays = lib.attrValues self.overlays;
           config.allowUnfree = true;
+          hostname = builtins.getEnv "HOSTNAME";
         };
       };
 

@@ -1,11 +1,14 @@
-{ flake, pkgs, lib, config, ... }:
+{ flake, pkgs, lib, config, hostSpec, ... }:
 let
   inherit (flake) inputs;
   inherit (inputs) self;
 in
 {
+  inherit hostSpec;
   imports = [
+    # ../../../modules/common/config.nix
     self.homeModules.default
+
   ];
 
   # To use the `nix` from `inputs.nixpkgs` on templates using the standalone `home-manager` template
@@ -17,7 +20,8 @@ in
     config.nix.package
   ];
 
-  home.username = "jaime";
-  home.homeDirectory = lib.mkDefault "/${if pkgs.stdenv.isDarwin then "Users" else "home"}/jaime";
+  home.username = config.hostSpec.username;
+  # home.username = flake.config.hostSpec.username;
+  home.homeDirectory = lib.mkDefault "/${if pkgs.stdenv.isDarwin then "Users" else "home"}/${config.hostSpec.username}";
   home.stateVersion = "24.11";
 }
