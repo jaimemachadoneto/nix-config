@@ -109,7 +109,7 @@
               extendedLib = nixpkgs.lib.extend (self: super: { custom = import ./lib { inherit (nixpkgs) lib; }; });
             };
             modules = [
-              ./hosts/home/${host}/jaime-note.nix # adjust path to your home-manager configs
+              ./hosts/home/${host} # adjust path to your home-manager configs
             ];
           };
       };
