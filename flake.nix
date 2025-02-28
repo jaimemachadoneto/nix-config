@@ -27,6 +27,12 @@
     };
 
 
+    # Pre-commit
+    pre-commit-hooks = {
+      url = "github:cachix/git-hooks.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     # Devshell
     omnix.url = "github:juspay/omnix";
     git-hooks.url = "github:cachix/git-hooks.nix";
@@ -89,14 +95,10 @@
       # Return the hosts declared in the given directory
       readHosts = folder: lib.attrNames (builtins.readDir ./hosts/${folder});
 
-      mkHomeConfigurations = hosts: lib.foldl
-        (acc: host:
-          acc // (mkHome host))
-        { }
-        hosts;
+      mkHomeConfigurations = hosts: isDarwin: lib.foldl (acc: set: acc // set) { } (lib.map (host: mkHome host isDarwin) hosts);
 
       # Add this new function to create standalone home-manager configs
-      mkHome = host: isDarwin {
+      mkHome = host: isDarwin: {
         # This will create configs in the format "username@hostname"
         "${host}" =
           home-manager.lib.homeManagerConfiguration {
