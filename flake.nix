@@ -32,39 +32,158 @@
     git-hooks.url = "github:cachix/git-hooks.nix";
     git-hooks.flake = false;
 
-    nix-secrets = {
-      url = "git+ssh://git@github.com/jaimemachado/nix-secrets?shallow=1&ref=main";
-      flake = false;
-    };
+    # nix-secrets = {
+    #   url = "git+ssh://git@github.com/jaimemachado/nix-secrets?shallow=1&ref=main";
+    #   flake = false;
+    # };
 
   };
 
-  # Wired using https://nixos-unified.org/autowiring.html
-  outputs = inputs@{ self, home-manager, ... }:
-    inputs.flake-parts.lib.mkFlake { inherit inputs; } {
-      systems = [ "x86_64-linux" "aarch64-linux" "aarch64-darwin" ];
-      imports = (with builtins;
-        map
-          (fn: ./modules/flake-parts/${fn})
-          (attrNames (readDir ./modules/flake-parts)));
+  outputs =
+    { self, nixpkgs, home-manager, ... }@inputs:
+    let
+      inherit (self) outputs;
+      inherit (nixpkgs) lib;
 
-      perSystem = { lib, system, ... }: {
-        # Make our overlay available to the devShell
-        # "Flake parts does not yet come with an endorsed module that initializes the pkgs argument.""
-        # So we must do this manually; https://flake.parts/overlays#consuming-an-overlay
-        _module.args.pkgs = import inputs.nixpkgs {
-          inherit system;
-          overlays = lib.attrValues self.overlays;
-          config.allowUnfree = true;
-          hostname = builtins.getEnv "HOSTNAME";
-        };
-      };
+      #
+      # ========= Architectures =========
+      #
+      forAllSystems = nixpkgs.lib.genAttrs [
+        # "aarch64-linux"
+        # "i686-linux"
+        "x86_64-linux"
+        # "aarch64-darwin"
+        # "x86_64-darwin"
+      ];
 
-      # https://omnix.page/om/ci.html
-      flake.om.ci.default.ROOT = {
-        dir = ".";
-        steps.flake-check.enable = false; # Doesn't make sense to check nixos config on darwin!
-        steps.custom = { };
+      #
+      # ========= Host Config Functions =========
+      #
+      # Handle a given host config based on whether its underlying system is nixos or darwin
+      mkHost = host: isDarwin: {
+        ${host} =
+          let
+            func = if isDarwin then inputs.nix-darwin.lib.darwinSystem else lib.nixosSystem;
+            systemFunc = func;
+          in
+          systemFunc {
+            specialArgs = {
+              inherit
+                inputs
+                outputs
+                isDarwin
+                ;
+
+              # ========== Extend lib with lib.custom ==========
+              # NOTE: This approach allows lib.custom to propagate into hm
+              # see: https://github.com/nix-community/home-manager/pull/3454
+              lib = nixpkgs.lib.extend (self: super: { custom = import ./lib { inherit (nixpkgs) lib; }; });
+
+            };
+            modules = [ ./hosts/${if isDarwin then "darwin" else "nixos"}/${host} ];
+          };
       };
+      # Invoke mkHost for each host config that is declared for either nixos or darwin
+      mkHostConfigs =
+        hosts: isDarwin: lib.foldl (acc: set: acc // set) { } (lib.map (host: mkHost host isDarwin) hosts);
+      # Return the hosts declared in the given directory
+      readHosts = folder: lib.attrNames (builtins.readDir ./hosts/${folder});
+
+      mkHomeConfigurations = hosts: lib.foldl
+        (acc: host:
+          acc // (mkHome host))
+        { }
+        hosts;
+
+      # Add this new function to create standalone home-manager configs
+      mkHome = host: isDarwin {
+        # This will create configs in the format "username@hostname"
+        "${host}" =
+          home-manager.lib.homeManagerConfiguration {
+            pkgs = nixpkgs.legacyPackages.x86_64-linux; # adjust system as needed
+            extraSpecialArgs = {
+              inherit inputs outputs isDarwin;
+              # Add other specialArgs as needed
+              extendedLib = nixpkgs.lib.extend (self: super: { custom = import ./lib { inherit (nixpkgs) lib; }; });
+            };
+            modules = [
+              ./hosts/home/${host}/jaime-note.nix # adjust path to your home-manager configs
+            ];
+          };
+      };
+    in
+    {
+      #
+      # ========= Overlays =========
+      #
+      # Custom modifications/overrides to upstream packages.
+      overlays = import ./overlays { inherit inputs; };
+
+      #
+      # ========= Host Configurations =========
+      #
+      # Building configurations is available through `just rebuild` or `nixos-rebuild --flake .#hostname`
+      nixosConfigurations = mkHostConfigs (readHosts "nixos") false;
+      #darwinConfigurations = mkHostConfigs (readHosts "darwin") true;
+
+      #
+      # ========= Packages =========
+      #
+      # Add custom packages to be shared or upstreamed.
+      packages = forAllSystems (
+        system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            overlays = [ self.overlays.default ];
+          };
+        in
+        lib.packagesFromDirectoryRecursive {
+          callPackage = lib.callPackageWith pkgs;
+          directory = ./pkgs/common;
+        }
+      );
+
+      #
+      # ========= Formatting =========
+      #
+      # Nix formatter available through 'nix fmt' https://nix-community.github.io/nixpkgs-fmt
+      formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.nixfmt-rfc-style);
+      # Pre-commit checks
+      checks = forAllSystems (
+        system:
+        let
+          pkgs = nixpkgs.legacyPackages.${system};
+        in
+        import ./checks.nix { inherit inputs system pkgs; }
+      );
+      #
+      # ========= DevShell =========
+      #
+      # Custom shell for bootstrapping on new hosts, modifying nix-config, and secrets management
+      devShells = forAllSystems (
+        system:
+        import ./shell.nix {
+          pkgs = nixpkgs.legacyPackages.${system};
+          checks = self.checks.${system};
+        }
+      );
+
+      # Add this new output
+      homeConfigurations = mkHomeConfigurations (readHosts "home") false;
+      # homeConfigurations = {
+      # # FIXME replace with your username@hostname
+      # "jaime-note" = home-manager.lib.homeManagerConfiguration {
+      #   pkgs = nixpkgs.legacyPackages.x86_64-linux; # Home-manager requires 'pkgs' instance
+      #   extraSpecialArgs = {
+      #     inherit inputs outputs;
+      #     extendedLib = nixpkgs.lib.extend (self: super: { custom = import ./lib { inherit (nixpkgs) lib; }; });
+      #   };
+      #   modules = [
+      #     # > Our main home-manager configuration file <
+      #     ./hosts/home/jaime-note/home.nix # adjust path to your home-manager configs
+      #   ];
+      # };
+      # };
     };
 }
