@@ -95,24 +95,35 @@
       # Return the hosts declared in the given directory
       readHosts = folder: lib.attrNames (builtins.readDir ./hosts/${folder});
 
-      mkHomeConfigurations = hosts: isDarwin: lib.foldl (acc: set: acc // set) { } (lib.map (host: mkHome host isDarwin) hosts);
+      mkHomeConfigurations = hosts: isDarwin: system: lib.foldl (acc: set: acc // set) { } (lib.map (host: mkHome host isDarwin system) hosts);
 
       # Add this new function to create standalone home-manager configs
-      mkHome = host: isDarwin: {
+      mkHome = host: isDarwin: system: {
         # This will create configs in the format "username@hostname"
         "${host}" =
           home-manager.lib.homeManagerConfiguration {
-            pkgs = nixpkgs.legacyPackages.x86_64-linux; # adjust system as needed
+            pkgs = nixpkgs.legacyPackages.${system};
             extraSpecialArgs = {
               inherit inputs outputs isDarwin;
-              # Add other specialArgs as needed
-              extendedLib = nixpkgs.lib.extend (self: super: { custom = import ./lib { inherit (nixpkgs) lib; }; });
+              # Pass custom packages as extraSpecialArgs
+              cuspkgstomPkgs =
+                let
+                  pkgs = nixpkgs.legacyPackages.${system};
+                in
+                lib.packagesFromDirectoryRecursive {
+                  callPackage = lib.callPackageWith pkgs;
+                  directory = ./pkgs/common;
+                };
+              extendedLib = nixpkgs.lib.extend (self: super: {
+                custom = import ./lib { inherit (nixpkgs) lib; };
+              });
             };
             modules = [
               ./hosts/home/${host} # adjust path to your home-manager configs
             ];
           };
       };
+
     in
     {
       #
@@ -172,7 +183,7 @@
       );
 
       # Add this new output
-      homeConfigurations = mkHomeConfigurations (readHosts "home") false;
+      homeConfigurations = mkHomeConfigurations (readHosts "home") false "x86_64-linux";
       # homeConfigurations = {
       # # FIXME replace with your username@hostname
       # "jaime-note" = home-manager.lib.homeManagerConfiguration {

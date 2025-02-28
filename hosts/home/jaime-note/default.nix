@@ -5,6 +5,7 @@
 , lib
 , config
 , pkgs
+, cuspkgstomPkgs
 , ...
 }: {
   # You can import other home-manager modules here
@@ -48,6 +49,14 @@
     homeDirectory = "/home/jaime";
   };
 
+
+  home.packages = [
+    # Add packages you want to install
+    # neovim
+    # steam
+    pkgs.neovim
+    cuspkgstomPkgs.myfindin
+  ];
   # Add stuff for your user as you see fit:
   # programs.neovim.enable = true;
   # home.packages = with pkgs; [ steam ];
