@@ -39,7 +39,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup SSH
-        uses: kielabokkie/ssh-key-and-known-hosts-action@5b675129e6aa73a496c939eb1f4a9fe4502fc324
+        uses: kielabokkie/ssh-key-and-known-hosts-action@67c95208312c38a09143246b804499819a1f2852
         with:
           ssh-private-key: ${{ secrets.NIX_SECRETS_SSH }}
           ssh-host: github.com
