@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup SSH
         uses: kielabokkie/ssh-key-and-known-hosts-action@5b675129e6aa73a496c939eb1f4a9fe4502fc324
